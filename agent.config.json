@@ -11,5 +11,8 @@
   "commands": {
     "deny": ["rm -rf", "git push", "sudo", "shutdown", "reboot", "mkfs", "format c:", "rmdir /s", "del /f /s /q"],
     "require_approval": ["npm install", "pip install", "composer install", "git commit"]
+  },
+  "plugins": {
+    "enabled": ["count_lines"]
   }
 }

@@ -30,6 +30,9 @@ class Settings:
     memory_file: Path = Path(".agent/memory.json")
     observability_provider: str = "none"
     compact_after_messages: int = 60
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
 
     @classmethod
     def from_env(cls, env_file: Path | None = Path(".env")) -> Settings:
@@ -52,6 +55,15 @@ class Settings:
             memory_file=Path(os.getenv("AGENT_MEMORY_FILE", str(cls.memory_file))),
             observability_provider=os.getenv("OBSERVABILITY_PROVIDER", cls.observability_provider),
             compact_after_messages=_env_int("COMPACT_AFTER_MESSAGES", cls.compact_after_messages),
+            langfuse_public_key=os.getenv("LANGFUSE_PUBLIC_KEY", ""),
+            langfuse_secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),
+            # LANGFUSE_HOST is canonical; LANGFUSE_BASE_URL is accepted as an alias
+            # (the name the Langfuse SDK's own docs sometimes use).
+            langfuse_host=(
+                os.getenv("LANGFUSE_HOST")
+                or os.getenv("LANGFUSE_BASE_URL")
+                or cls.langfuse_host
+            ),
         )
 
     def validate(self) -> None:
@@ -63,6 +75,13 @@ class Settings:
             raise SettingsError("MAX_TOOL_ITERATIONS must be >= 1")
         if self.compact_after_messages < 10:
             raise SettingsError("COMPACT_AFTER_MESSAGES must be >= 10")
+        if self.observability_provider == "langfuse" and not (
+            self.langfuse_public_key and self.langfuse_secret_key
+        ):
+            raise SettingsError(
+                "OBSERVABILITY_PROVIDER=langfuse requires LANGFUSE_PUBLIC_KEY and "
+                "LANGFUSE_SECRET_KEY. Add them to your .env."
+            )
 
 
 def _env_float(name: str, default: float) -> float:

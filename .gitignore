@@ -8,3 +8,5 @@ agent.log
 venv/
 .agent/
 rag_index.json
+HealthApi-AlbertoPizzi/
+.DS_Store

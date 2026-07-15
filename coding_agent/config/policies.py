@@ -45,6 +45,9 @@ class AgentPolicies:
     write_deny: tuple[str, ...] = ()
     command_deny: tuple[str, ...] = ()
     command_require_approval: tuple[str, ...] = ()
+    # None -> no "plugins" key present, load every discovered plugin;
+    # a tuple (possibly empty) -> load only the named plugins.
+    plugin_allowlist: tuple[str, ...] | None = None
 
     @classmethod
     def load(cls, config_path: Path, base_dir: Path | None = None) -> AgentPolicies:
@@ -65,6 +68,12 @@ class AgentPolicies:
         if workspace_raw is not None and not isinstance(workspace_raw, str):
             raise PolicyViolation("Policy key 'workspace' must be a string path")
 
+        plugin_allowlist = (
+            _pattern_list(_as_object(data, "plugins"), "enabled", "plugins.enabled")
+            if data.get("plugins") is not None
+            else None
+        )
+
         policies = cls(
             workspace=(base / workspace_raw).resolve() if workspace_raw else None,
             read_deny=_pattern_list(_as_object(permissions, "read"), "deny", "permissions.read.deny"),
@@ -73,6 +82,7 @@ class AgentPolicies:
             command_require_approval=_pattern_list(
                 commands, "require_approval", "commands.require_approval"
             ),
+            plugin_allowlist=plugin_allowlist,
         )
         logger.info("Agent policies loaded from %s", config_path)
         return policies

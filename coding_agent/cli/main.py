@@ -40,6 +40,7 @@ from coding_agent.rag.embeddings import NullEmbeddings, OpenAIEmbeddings
 from coding_agent.tools import ToolRegistry
 from coding_agent.tools.ask_user import AskUserTool
 from coding_agent.tools.delegate import DelegateTool
+from coding_agent.tools.discovery import discover_tools
 from coding_agent.tools.list_files import ListFilesTool
 from coding_agent.tools.rag_search import RagSearchTool
 from coding_agent.tools.read_file import ReadFileTool
@@ -87,7 +88,12 @@ class AgentApp:
 
 
 def build_registry(
-    settings: Settings, state: TaskState, tracer: Tracer, io: ConsoleIO, memory: ProjectMemory
+    settings: Settings,
+    state: TaskState,
+    tracer: Tracer,
+    io: ConsoleIO,
+    memory: ProjectMemory,
+    policies: AgentPolicies,
 ) -> ToolRegistry:
     """Wire up every tool with its configuration (single place to add tools)."""
     search_provider = (
@@ -100,7 +106,7 @@ def build_registry(
         if settings.openai_api_key
         else NullEmbeddings()
     )
-    return ToolRegistry(
+    registry = ToolRegistry(
         [
             ReadFileTool(max_output_chars=settings.max_read_file_chars),
             WriteFileTool(),
@@ -115,6 +121,12 @@ def build_registry(
             AskUserTool(io),
         ]
     )
+    for tool in discover_tools(allowlist=policies.plugin_allowlist):
+        try:
+            registry.register(tool)
+        except ValueError:
+            io.warn(f"Plugin tool '{tool.name}' clashes with a built-in; skipped.")
+    return registry
 
 
 def build_app(
@@ -130,7 +142,7 @@ def build_app(
     memory = ProjectMemory(settings.memory_file)
     working_dir = Path.cwd()
 
-    registry = build_registry(settings, state, tracer, io, memory)
+    registry = build_registry(settings, state, tracer, io, memory, policies)
     supervisor = Supervisor(io, enabled=True)
     planner = Planner(llm, io, enabled=False)
 
