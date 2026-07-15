@@ -1,0 +1,16 @@
+{
+  "allowed_directories": ["."],
+  "blocked_directories": [".git"],
+  "blocked_files": [".env"],
+  "blocked_commands": [
+    "rm -rf",
+    "git push",
+    "sudo",
+    "shutdown",
+    "reboot",
+    "mkfs",
+    "format c:",
+    "rmdir /s",
+    "del /f /s /q"
+  ]
+}
