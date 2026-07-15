@@ -6,3 +6,5 @@ agent.log
 .pytest_cache/
 .venv/
 venv/
+.agent/
+rag_index.json

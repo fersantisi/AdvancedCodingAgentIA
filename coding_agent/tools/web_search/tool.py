@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from coding_agent.models import SourceOrigin, SourceRecord, TaskState
 from coding_agent.tools.base import Tool, ToolError, require_string
 from coding_agent.tools.web_search.provider import SearchError, SearchProvider
 
@@ -26,8 +27,9 @@ class WebSearchTool(Tool):
     }
     read_only = True
 
-    def __init__(self, provider: SearchProvider) -> None:
+    def __init__(self, provider: SearchProvider, state: TaskState | None = None) -> None:
         self._provider = provider
+        self._state = state
 
     def execute(self, arguments: dict[str, Any]) -> str:
         query = require_string(arguments, "query")
@@ -42,6 +44,11 @@ class WebSearchTool(Tool):
 
         if not results:
             return f"No results found for: {query}"
+        if self._state is not None:
+            for result in results:
+                self._state.add_source(
+                    SourceRecord(origin=SourceOrigin.WEB, reference=result.url, detail=result.title)
+                )
         blocks = [
             f"{index}. {result.title}\n   {result.url}\n   {result.snippet}"
             for index, result in enumerate(results, start=1)

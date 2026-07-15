@@ -15,7 +15,7 @@ from typing import Any
 import openai
 
 from coding_agent.llm.base import LLMClient, LLMError
-from coding_agent.models import AssistantTurn, Message, Role, ToolCall, ToolSpec
+from coding_agent.models import AssistantTurn, Message, Role, ToolCall, ToolSpec, Usage
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,17 @@ def _parse_response(response: Any) -> AssistantTurn:
         bool(message.content),
         [call.name for call in tool_calls],
     )
-    return AssistantTurn(text=message.content, tool_calls=tool_calls)
+    return AssistantTurn(text=message.content, tool_calls=tool_calls, usage=_parse_usage(response))
+
+
+def _parse_usage(response: Any) -> Usage | None:
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return None
+    return Usage(
+        prompt_tokens=usage.prompt_tokens or 0,
+        completion_tokens=usage.completion_tokens or 0,
+    )
 
 
 def _parse_arguments(call: Any) -> dict[str, Any]:

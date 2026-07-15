@@ -1,0 +1,15 @@
+{
+  "workspace": ".",
+  "permissions": {
+    "read": {
+      "deny": [".env", "**/*.pem", "secrets/**"]
+    },
+    "write": {
+      "deny": [".env", ".github/**", "**/*.pem", "secrets/**", "package-lock.json", "guardrails.json", "agent.config.json"]
+    }
+  },
+  "commands": {
+    "deny": ["rm -rf", "git push", "sudo", "shutdown", "reboot", "mkfs", "format c:", "rmdir /s", "del /f /s /q"],
+    "require_approval": ["npm install", "pip install", "composer install", "git commit"]
+  }
+}

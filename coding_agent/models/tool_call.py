@@ -34,11 +34,24 @@ class ToolSpec:
 
 
 @dataclass(frozen=True)
+class Usage:
+    """Token accounting for one LLM call (used for observability)."""
+
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
+
+
+@dataclass(frozen=True)
 class AssistantTurn:
     """One LLM response: optional text plus zero or more tool calls."""
 
     text: str | None
     tool_calls: tuple[ToolCall, ...] = ()
+    usage: Usage | None = None
 
     @property
     def wants_tools(self) -> bool:

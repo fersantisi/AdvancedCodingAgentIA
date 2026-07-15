@@ -6,7 +6,11 @@ from coding_agent.models import AssistantTurn, Message, Role, ToolResult
 
 
 class ConversationHistory:
-    """Append-only message history shared by every turn until the program exits."""
+    """Message history shared by every turn until the program exits.
+
+    Append-only, with one deliberate exception: :meth:`replace_span` lets the
+    context compactor replace an old span with a summary message.
+    """
 
     def __init__(self, system_prompt: str) -> None:
         self._messages: list[Message] = [Message(role=Role.SYSTEM, content=system_prompt)]
@@ -27,6 +31,16 @@ class ConversationHistory:
         self._messages.append(
             Message(role=Role.TOOL, content=content, tool_call_id=result.tool_call_id)
         )
+
+    def replace_span(self, start: int, end: int, summary: str) -> None:
+        """Replace ``messages[start:end]`` with a single summary message.
+
+        Used only by context compaction; ``start`` must be >= 1 so the system
+        prompt is never removed.
+        """
+        if start < 1 or end <= start or end > len(self._messages):
+            raise ValueError(f"Invalid compaction span [{start}:{end}] for {len(self._messages)} messages")
+        self._messages[start:end] = [Message(role=Role.USER, content=summary)]
 
     def messages(self) -> tuple[Message, ...]:
         return tuple(self._messages)

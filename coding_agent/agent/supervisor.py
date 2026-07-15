@@ -23,9 +23,14 @@ class Supervisor:
         self._io = io
         self.enabled = enabled
 
-    def approve(self, tool: Tool, call: ToolCall) -> bool:
-        """Return True if the tool call may run."""
-        if not self.enabled or tool.read_only:
+    def approve(self, tool: Tool, call: ToolCall, *, required: bool = False) -> bool:
+        """Return True if the tool call may run.
+
+        ``required`` forces the prompt regardless of the supervision toggle —
+        used for commands listed under ``commands.require_approval`` in the
+        agent policies (the config file always wins).
+        """
+        if not required and (not self.enabled or tool.read_only):
             return True
         approved = self._io.confirm(f"Approve {_describe(call)}? [Y/n] ")
         logger.info("Supervision: %s -> %s", call.name, "approved" if approved else "denied")

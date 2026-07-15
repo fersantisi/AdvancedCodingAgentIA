@@ -25,6 +25,11 @@ class Settings:
     max_tool_iterations: int = 30
     llm_max_retries: int = 3
     log_file: Path = Path("agent.log")
+    embeddings_model: str = "text-embedding-3-small"
+    rag_store_path: Path = Path("rag_index.json")
+    memory_file: Path = Path(".agent/memory.json")
+    observability_provider: str = "none"
+    compact_after_messages: int = 60
 
     @classmethod
     def from_env(cls, env_file: Path | None = Path(".env")) -> Settings:
@@ -42,6 +47,11 @@ class Settings:
             max_tool_iterations=_env_int("MAX_TOOL_ITERATIONS", cls.max_tool_iterations),
             llm_max_retries=_env_int("LLM_MAX_RETRIES", cls.llm_max_retries),
             log_file=Path(os.getenv("AGENT_LOG_FILE", str(cls.log_file))),
+            embeddings_model=os.getenv("EMBEDDINGS_MODEL", cls.embeddings_model),
+            rag_store_path=Path(os.getenv("RAG_STORE_PATH", str(cls.rag_store_path))),
+            memory_file=Path(os.getenv("AGENT_MEMORY_FILE", str(cls.memory_file))),
+            observability_provider=os.getenv("OBSERVABILITY_PROVIDER", cls.observability_provider),
+            compact_after_messages=_env_int("COMPACT_AFTER_MESSAGES", cls.compact_after_messages),
         )
 
     def validate(self) -> None:
@@ -51,6 +61,8 @@ class Settings:
             )
         if self.max_tool_iterations < 1:
             raise SettingsError("MAX_TOOL_ITERATIONS must be >= 1")
+        if self.compact_after_messages < 10:
+            raise SettingsError("COMPACT_AFTER_MESSAGES must be >= 10")
 
 
 def _env_float(name: str, default: float) -> float:

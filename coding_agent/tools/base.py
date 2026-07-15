@@ -79,3 +79,10 @@ class ToolRegistry:
 
     def names(self) -> tuple[str, ...]:
         return tuple(self._tools)
+
+    def subset(self, names: tuple[str, ...]) -> ToolRegistry:
+        """A new registry with only the named tools (unknown names are skipped).
+
+        Used to give each subagent its own restricted tool set.
+        """
+        return ToolRegistry([self._tools[name] for name in names if name in self._tools])
