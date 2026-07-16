@@ -332,8 +332,10 @@ In-chat commands: `/plan on|off`, `/supervise on|off`, `/state` (`/state json`),
 - **Plan Mode** (`/plan on`, default off): an extra **tool-free** LLM call produces a numbered
   plan; you `[a]pprove / [m]odify / [r]eject` before anything runs.
 - **Supervision** (`/supervise on|off`, default **on**): every **mutating** tool
-  (`write_file`, `run_command`, `remember`, `delegate`) asks `[Y/n]` first; read-only tools
-  never ask. `commands.require_approval` in the policy always asks, even with supervision off.
+  (`write_file`, `run_command` — the ones with `read_only = False`) asks `[Y/n]` first;
+  read-only tools (including `remember`, which only touches the agent's own memory file, and
+  `delegate`, whose inner tool calls are policed individually) never ask.
+  `commands.require_approval` in the policy always asks, even with supervision off.
 
 ## Error handling
 

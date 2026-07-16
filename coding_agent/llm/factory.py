@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from coding_agent.config.settings import Settings, SettingsError
 from coding_agent.llm.base import LLMClient
 from coding_agent.llm.openai_client import OpenAIClient
 from coding_agent.llm.retry import RetryingLLMClient
-from coding_agent.observability.base import Tracer
-from coding_agent.observability.tracing_client import TracingLLMClient
+
+if TYPE_CHECKING:
+    from coding_agent.observability.base import Tracer
 
 
 def create_llm_client(settings: Settings, tracer: Tracer | None = None) -> LLMClient:
@@ -26,5 +29,9 @@ def create_llm_client(settings: Settings, tracer: Tracer | None = None) -> LLMCl
             f"Unknown LLM provider '{settings.llm_provider}'. Supported: openai"
         )
     if tracer is not None:
+        # Imported here, not at module level: observability's tracing client
+        # subclasses llm.base, so a top-level import would be circular.
+        from coding_agent.observability.tracing_client import TracingLLMClient
+
         client = TracingLLMClient(client, tracer, settings.openai_model)
     return RetryingLLMClient(client, max_attempts=settings.llm_max_retries)
